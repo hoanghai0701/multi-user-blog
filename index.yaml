@@ -15,3 +15,16 @@ indexes:
   - name: user
   - name: created_at
     direction: desc
+
+- kind: Post
+  ancestor: yes
+  properties:
+  - name: created_at
+    direction: desc
+
+- kind: Post
+  ancestor: yes
+  properties:
+  - name: user
+  - name: created_at
+    direction: desc

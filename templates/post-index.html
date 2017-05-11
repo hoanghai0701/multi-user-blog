@@ -15,7 +15,7 @@
                             </h3>
                         </a>
                         <p class="post-meta">Posted by <a style="color: cornflowerblue"
-                                                          href="/users/{{ post.user.key().id() }}/posts">{{ post.user.username }}</a> on {{ post.created_at.strftime("%d/%m/%Y") }}
+                                                          href="/users/{{ post.user.key().id() }}/posts">{{ post.user.username }}</a> on {{ post.created_at.strftime("%Y-%m-%d") }}
                         </p>
                     </div>
                 {% endfor %}

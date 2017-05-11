@@ -14,6 +14,7 @@ def authenticated(func):
             return self.redirect('/login')
         else:
             func(self, *args, **kwargs)
+
     return wrapper
 
 
@@ -97,7 +98,7 @@ class UserHandler(Handler):
             page = 0
 
         limit = 5
-        posts = user.posts.order('-created_at').fetch(limit=limit + 1, offset=limit * page)
+        posts = user.posts.ancestor(Post.post_key()).order('-created_at').fetch(limit=limit + 1, offset=limit * page)
 
         if len(posts) == limit + 1:
             no_more = False
@@ -131,30 +132,23 @@ class PostHandler(Handler):
         subtitle = self.request.get('subtitle')
         content = self.request.get('content')
 
-        if not subtitle:
-            subtitle = None
-
         if not (title and content):
             self.render('post-create.html', title=title,
                         subtitle=subtitle,
                         content=content,
                         error='Both title and content are required')
         else:
-            post = Post(title=title, subtitle=subtitle, content=content, user=self.user)
+            post = Post(parent=Post.post_key(), title=title, subtitle=subtitle, content=content, user=self.user)
             post.put()
             self.redirect('/posts/' + str(post.key().id()))
 
     def show(self, post_id):
-        if not post_id.isdigit():
-            self.redirect('/')
+        post_id = int(post_id)
+        post = Post.get_by_id(post_id, parent=Post.post_key())
+        if not post:
+            return self.redirect('/')
         else:
-            post_id = int(post_id)
-            post = Post.get_by_id(post_id)
-
-            if not post:
-                return self.redirect('/')
-            else:
-                self.render('post-show.html', post=post)
+            self.render('post-show.html', post=post)
 
     def index(self):
         page = self.request.get('page', 0)
@@ -175,6 +169,55 @@ class PostHandler(Handler):
 
         self.render('post-index.html', posts=posts, page=page, no_more=no_more)
 
+    @authenticated
+    def edit(self, post_id):
+        post_id = int(post_id)
+        post = Post.get_by_id(post_id, parent=Post.post_key())
 
+        if not post:
+            return self.redirect('/')
+        else:
+            if post.user.key().id() != self.user.key().id():
+                return self.redirect('/')
+            self.render('post-edit.html', title=post.title,
+                        subtitle=post.subtitle,
+                        content=post.content,
+                        post=post)
 
+    @authenticated
+    def update(self, post_id):
+        post_id = int(post_id)
+        post = Post.get_by_id(post_id, parent=Post.post_key())
 
+        if not post:
+            return self.redirect('/')
+        else:
+            if post.user.key().id() != self.user.key().id():
+                return self.redirect('/')
+            title = self.request.get('title')
+            subtitle = self.request.get('subtitle')
+            content = self.request.get('content')
+
+            if not (title and content):
+                self.render('post-edit.html', title=title,
+                            subtitle=subtitle,
+                            content=content,
+                            post=post,
+                            error="Both title and content are required")
+            else:
+                post.title = title
+                post.subtitle = subtitle
+                post.content = content
+                post.put()
+                self.redirect('/posts/' + str(post.key().id()))
+
+    @authenticated
+    def delete(self, post_id):
+        post_id = int(post_id)
+        post = Post.get_by_id(post_id, parent=Post.post_key())
+
+        if not post:
+            return self.redirect('/users/%s/posts' % str(self.user.key().id()))
+        else:
+            post.delete()
+            self.redirect('/users/%s/posts' % str(self.user.key().id()))

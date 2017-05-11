@@ -45,3 +45,7 @@ class Post(db.Model):
     content = db.TextProperty(required=True)
     created_at = db.DateTimeProperty(auto_now_add=True)
     user = db.ReferenceProperty(User, collection_name='posts', required=True)
+
+    @classmethod
+    def post_key(cls, name='default'):
+        return db.Key.from_path('posts', name)

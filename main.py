@@ -26,6 +26,9 @@ routes = [
     webapp2.Route(r'/posts/create', handler='handlers.PostHandler:create', methods=['GET'], name='post-create'),
     webapp2.Route(r'/posts/create', handler='handlers.PostHandler:store', methods=['POST']),
     webapp2.Route(r'/posts/<post_id:\d+>', handler='handlers.PostHandler:show', methods=['GET']),
+    webapp2.Route(r'/posts/<post_id:\d+>/edit', handler='handlers.PostHandler:edit', methods=['GET']),
+    webapp2.Route(r'/posts/<post_id:\d+>/edit', handler='handlers.PostHandler:update', methods=['POST']),
+    webapp2.Route(r'/posts/<post_id:\d+>/delete', handler='handlers.PostHandler:delete', methods=['POST']),
     webapp2.Route(r'/users/<user_id:\d+>/posts', handler='handlers.UserHandler:posts', methods=['GET'])
 ]
 

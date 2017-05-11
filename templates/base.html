@@ -56,9 +56,6 @@
                         </li>
                         {% if user is defined %}
                             <li>
-                                <a href="/posts/create">Create new post</a>
-                            </li>
-                            <li>
                                 <a href="/users/{{ user.key().id() }}/posts">My posts</a>
                             </li>
                         {% endif %}
