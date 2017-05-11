@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block header %}
+    <header class="intro-header" style="background-image: url('/img/post-bg.jpg')">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                    <div class="post-heading">
+                        <h1>{{ post.title }}</h1>
+                        <h2 class="subheading">{{ post.subtitle }}</h2>
+                        <span class="meta">Posted by <a style="color: cornflowerblue" href="/users/{{ post.user.key().id() }}/posts">{{ post.user.username }}</a> on {{ post.created_at }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+{% endblock %}
+
+{% block content %}
+    <article>
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+                    <p>{{ post.content }}</p>
+                </div>
+            </div>
+        </div>
+    </article>
+{% endblock %}
