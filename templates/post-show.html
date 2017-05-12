@@ -17,14 +17,14 @@
 {% endblock %}
 
 {% block content %}
-    <article>
-        <div class="container">
+    <div class="container">
+        <article>
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                     <p style="white-space: pre-wrap;">{{ post.content }}</p>
                 </div>
             </div>
-            {% if user.key().id() == post.user.key().id() %}
+            {% if user is defined and user.key().id() == post.user.key().id() %}
                 <hr>
                 <div class="row">
                     <div class="col-lg-4 col-md-4 text-center">
@@ -58,7 +58,112 @@
                     </div>
                 </div>
             {% endif %}
-            
+        </article>
+
+        <hr>
+
+        <div id="commentSection">
+            <div class="row">
+                <div class="col-lg-8 col-md-8">
+                    <form id="commentForm">
+                        <div class="form-group">
+                            <textarea rows="5" style="min-width: 100%" name="content"
+                                      placeholder="Enter your comment"></textarea>
+                        </div>
+                        <input type="submit" class="btn btn-default" value="Comment"/>
+                    </form>
+                </div>
+            </div>
+
+            <ul class="pager">
+                <li class="next">
+                    <a href id="next">Older Comments &rarr;</a>
+                </li>
+                <li class="next">
+                    <a href id="prev">&larr; Newer Comments</a>
+                </li>
+            </ul>
         </div>
-    </article>
+    </div>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            var renderComments = function (page) {
+                $("div.comment").remove();
+
+                if (page == 0) {
+                    $('#prev').hide();
+                } else {
+                    $('#prev').show();
+                }
+
+                $.ajax({
+                    url: '/posts/{{ post.key().id() }}/comments?page=' + page,
+                    type: 'get',
+                    dataType: 'json',
+                    success: function (res) {
+                        var comments = res;
+                        if (comments.length == 0) {
+                            $('#next').hide();
+                        } else {
+                            $('#next').show();
+                        }
+
+                        $.each(comments, function (index, comment) {
+                            var ele =
+                                '<div class="row comment" id="comment-' + comment._id + '">'
+                                + '<div class="col-lg-8 col-md-8">'
+                                + '<div class="panel panel-default">'
+                                + '<div class="panel-heading">'
+                                + '<strong>' + comment.user.username + '</strong> <span class="text-muted">commented on ' + comment.created_at + '</span>'
+                                + '</div>'
+                                + '<div class="panel-body">'
+                                + comment.content
+                                + '</div>'
+                                + '</div>'
+                                + '</div>'
+                                + '</div>';
+                            $('.pager').before(ele);
+                        });
+                    }
+                });
+            };
+
+            var currentPage = 0;
+            renderComments(currentPage);
+
+            $('#next').on('click', function (e) {
+                currentPage += 1;
+                renderComments(currentPage);
+                return false;
+            });
+
+            $('#prev').on('click', function (e) {
+               currentPage -= 1;
+               renderComments(currentPage);
+               return false;
+            });
+
+            $('#commentForm').on('submit', function (e) {
+                var content = $("textarea[name='content']").val();
+                $.ajax({
+                    url: '/posts/{{ post.key().id() }}/comments',
+                    type: 'post',
+                    data: JSON.stringify({
+                        content: content
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function (res) {
+                        renderComments(0);
+                    }
+                });
+
+                $('#commentForm textarea').val('');
+                return false;
+            })
+        });
+    </script>
+
+
 {% endblock %}

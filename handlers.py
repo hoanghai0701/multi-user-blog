@@ -3,6 +3,7 @@ import jinja2
 import os
 from models import *
 from helpers import *
+import json
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir), autoescape=True)
@@ -45,6 +46,16 @@ class Handler(webapp2.RequestHandler):
 
     def unset_cookie_user_id(self):
         self.response.headers.add_header('Set-cookie', 'user_id=; Path=/')
+
+
+class AjaxHandler(Handler):
+    def initialize(self, request, response):
+        super(AjaxHandler, self).initialize(request, response)
+        self.response.content_type = 'application/json'
+
+    def json(self, obj, status_code):
+        self.response.status = status_code
+        self.response.write(json.dumps(obj))
 
 
 class UserHandler(Handler):
@@ -221,3 +232,36 @@ class PostHandler(Handler):
         else:
             post.delete()
             self.redirect('/users/%s/posts' % str(self.user.key().id()))
+
+
+# This handler only serves ajax request
+class CommentHandler(AjaxHandler):
+    def index(self, post_id):
+        post_id = int(post_id)
+        post = Post.get_by_id(post_id, parent=Post.post_key())
+        page = self.request.get('page', 0)
+        page = int(page)
+        limit = 5
+
+        if not post:
+            return self.json({'error': 'Post not found'}, 404)
+        else:
+            comments = post.comments \
+                .ancestor(Comment.comment_key(Post.post_key())) \
+                .order("-created_at").fetch(limit=limit, offset=limit * page)
+
+            comments = [to_json(comment) for comment in comments]
+            return self.json(comments, 200)
+
+    def store(self, post_id):
+        post_id = int(post_id)
+        post = Post.get_by_id(post_id, parent=Post.post_key())
+        body = self.request.json
+        content = body['content']
+
+        if not post:
+            return self.json({'error': 'Post not found'}, 404)
+        else:
+            comment = Comment(user=self.user, post=post, content=content, parent=Comment.comment_key(Post.post_key()))
+            comment.put()
+            return self.json({'msg': 'Comment successfully'}, 200)
