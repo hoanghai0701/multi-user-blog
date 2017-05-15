@@ -75,7 +75,7 @@
                 </div>
                 <div class="col-lg-6 col-md-6 text-left small">
                     {% if post.num_likes <= 1 %}
-                        <p class="like-text">1 person likes this post</p>
+                        <p class="like-text">{{ post.num_likes }} person likes this post</p>
                     {% else %}
                         <p class="like-text">{{ post.num_likes }} people like this post</p>
                     {% endif %}
@@ -302,7 +302,7 @@
                         button.removeClass('btn-default').addClass('btn-info').text('Unlike').attr("id", "unlike-" + res.data.like._id).prop('disabled', false);
                         var likeText = likeSection.find('.like-text');
                         if (res.data.num_likes <= 1) {
-                            var text = '1 person likes this post'
+                            var text = res.data.num_likes + ' person likes this post'
                         } else {
                             var text = res.data.num_likes + ' people like this post'
                         }
@@ -325,7 +325,7 @@
                         button.removeClass('btn-info').addClass('btn-default').text('Like').attr("id", "like").prop('disabled', false);
                         var likeText = likeSection.find('.like-text');
                         if (res.data.num_likes <= 1) {
-                            var text = '1 person likes this post'
+                            var text = res.data.num_likes + ' person likes this post'
                         } else {
                             var text = res.data.num_likes + ' people like this post'
                         }
