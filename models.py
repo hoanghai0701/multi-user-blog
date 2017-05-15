@@ -1,7 +1,7 @@
-from google.appengine.ext import db
 from helpers import *
 import re
     
+
 class User(db.Model):
     username = db.StringProperty(required=True)
     password = db.StringProperty(required=True)
@@ -60,3 +60,4 @@ class Comment(db.Model):
     @classmethod
     def comment_key(cls, post_key, name='default'):
         return db.Key.from_path('comments', name, parent=post_key)
+

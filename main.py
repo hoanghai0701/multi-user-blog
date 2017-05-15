@@ -31,7 +31,9 @@ routes = [
     webapp2.Route(r'/posts/<post_id:\d+>/delete', handler='handlers.PostHandler:delete', methods=['POST']),
     webapp2.Route(r'/users/<user_id:\d+>/posts', handler='handlers.UserHandler:posts', methods=['GET']),
     webapp2.Route(r'/posts/<post_id:\d+>/comments', handler='handlers.CommentHandler:index', methods=['GET']),
-    webapp2.Route(r'/posts/<post_id:\d+>/comments', handler='handlers.CommentHandler:store', methods=['POST'])
+    webapp2.Route(r'/posts/<post_id:\d+>/comments', handler='handlers.CommentHandler:store', methods=['POST']),
+    webapp2.Route(r'/posts/<post_id:\d+>/comments/<comment_id:\d+>', handler='handlers.CommentHandler:update',
+                  methods=['PUT'])
 ]
 
 app = webapp2.WSGIApplication(routes, debug=True)

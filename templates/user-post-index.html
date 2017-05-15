@@ -5,9 +5,9 @@
             <div class="row">
                 <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                     <div class="site-heading">
-                        <h1>My posts</h1>
+                        <h1>{{ owner.username }}'s posts</h1>
                         <hr class="small">
-                        <span class="subheading">I am {{ user.username }}. This is my world, what is your problem ?</span>
+                        <span class="subheading">I am {{ owner.username }}. This is my world, what is your problem ?</span>
                     </div>
                 </div>
             </div>
@@ -18,11 +18,13 @@
 {% block content %}
     <!-- Main Content -->
     <div class="container">
-        <div class="row">
-            <div class="col-lg-12 col-md-12 text-center">
-                <a href="/posts/create" role="button" class="btn btn-default">Create new post</a>
+        {% if user is defined and owner.key().id() == user.key().id() %}
+            <div class="row">
+                <div class="col-lg-12 col-md-12 text-center">
+                    <a href="/posts/create" role="button" class="btn btn-default">Create new post</a>
+                </div>
             </div>
-        </div>
+        {% endif %}
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
                 {% for post in posts %}

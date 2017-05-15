@@ -63,17 +63,19 @@
         <hr>
 
         <div id="commentSection">
-            <div class="row">
-                <div class="col-lg-8 col-md-8">
-                    <form id="commentForm">
-                        <div class="form-group">
+            {% if user is defined %}
+                <div class="row" id="commentForm">
+                    <div class="col-lg-8 col-md-8">
+                        <form id="commentForm">
+                            <div class="form-group">
                             <textarea rows="5" style="min-width: 100%" name="content"
                                       placeholder="Enter your comment"></textarea>
-                        </div>
-                        <input type="submit" class="btn btn-default" value="Comment"/>
-                    </form>
+                            </div>
+                            <input type="submit" class="btn btn-default" value="Comment"/>
+                        </form>
+                    </div>
                 </div>
-            </div>
+            {% endif %}
 
             <ul class="pager">
                 <li class="next">
@@ -88,6 +90,39 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
+            var element = function (comment) {
+                var ele =
+                    '<div class="row comment" id="' + comment._id + '">'
+                    + '<div class="col-lg-8 col-md-8">'
+                    + '<div class="panel panel-default container-fluid">'
+                    + '<div class="panel-heading row">'
+                    + '<div class="col-lg-6 col-md-6 text-left">'
+                    + '<strong>' + comment.user.username + '</strong> <span class="text-muted">commented on ' + comment.created_at + '</span>'
+                    + '</div>';
+
+                {% if user is defined %}
+                    if (comment.user._id == '{{ user.key().id() }}') {
+                        ele +=
+                            '<div class="col-lg-2 col-lg-offset-2 col-md-2 col-md-offset-2 text-right small">'
+                            + '<a href id="edit-' + comment._id + '">Edit</a>'
+                            + '</div>'
+                            + '<div class="col-lg-2 col-md-2 text-right small">'
+                            + '<a href id="delete-' + comment._id + '">Delete</a>'
+                            + '</div>'
+                    }
+                {% endif %}
+
+                ele +=
+                    '</div>'
+                    + '<div class="panel-body">'
+                    + '<p class="comment-content">' + comment.content + '</p>'
+                    + '</div>'
+                    + '</div>'
+                    + '</div>'
+                    + '</div>';
+                return ele;
+            };
+
             var renderComments = function (page) {
                 $("div.comment").remove();
 
@@ -110,23 +145,16 @@
                         }
 
                         $.each(comments, function (index, comment) {
-                            var ele =
-                                '<div class="row comment" id="comment-' + comment._id + '">'
-                                + '<div class="col-lg-8 col-md-8">'
-                                + '<div class="panel panel-default">'
-                                + '<div class="panel-heading">'
-                                + '<strong>' + comment.user.username + '</strong> <span class="text-muted">commented on ' + comment.created_at + '</span>'
-                                + '</div>'
-                                + '<div class="panel-body">'
-                                + comment.content
-                                + '</div>'
-                                + '</div>'
-                                + '</div>'
-                                + '</div>';
+                            var ele = element(comment);
                             $('.pager').before(ele);
                         });
                     }
                 });
+            };
+
+            var appendComments = function (comment) {
+                var ele = element(comment);
+                $('#commentForm').after(ele);
             };
 
             var currentPage = 0;
@@ -139,9 +167,9 @@
             });
 
             $('#prev').on('click', function (e) {
-               currentPage -= 1;
-               renderComments(currentPage);
-               return false;
+                currentPage -= 1;
+                renderComments(currentPage);
+                return false;
             });
 
             $('#commentForm').on('submit', function (e) {
@@ -155,13 +183,78 @@
                     contentType: 'application/json',
                     dataType: 'json',
                     success: function (res) {
-                        renderComments(0);
+                        if (currentPage != 0) {
+                            currentPage = 0;
+                            renderComments(0);
+                        } else {
+                            console.log(res);
+                            appendComments(res.data);
+                        }
                     }
                 });
 
                 $('#commentForm textarea').val('');
                 return false;
-            })
+            });
+
+            var updateComment = function(id, content) {
+              var body = $("div#" + id).find(".panel-body");
+              body.children(".edit-comment").remove();
+              var p = body.find("p");
+              p.text(content);
+              p.show();
+            };
+
+            $(document).on("click", 'a[id^="edit-"]', function (e) {
+                var id = $(this).attr("id").split("-")[1];
+                var body = $("div#" + id).find(".panel-body");
+                var p = body.find("p");
+                var content = body.find("p").text();
+                p.hide();
+
+                var html =
+                    '<div class="edit-comment">'
+                    + '<textarea style="min-width: 100%">' + content + '</textarea>'
+                    + '<div class="row">'
+                        + '<div class="col-lg-6 col-md-6 text-left">'
+                            + '<button class="btn btn-default" id="save-'+ id + '">Save</button>'
+                        + '</div>'
+                        + '<div class="col-lg-6 col-md-6 text-right">'
+                            + '<button class="btn btn-danger " id="cancel-'+ id + '">Cancel</button>'
+                        + '</div>'
+                    + '</div>'
+                    + '</div>';
+
+                body.append(html);
+                return false;
+            });
+
+            $(document).on("click", 'button[id^="save-"]', function (e) {
+                var id = $(this).attr("id").split("-")[1];
+                var content = $(this).parents(".edit-comment").children("textarea").val();
+                $.ajax({
+                    url: '/posts/{{ post.key().id() }}/comments/' + id,
+                    type: 'put',
+                    data: JSON.stringify({
+                        content: content
+                    }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function (res) {
+                        updateComment(id, content);
+                    }
+                });
+
+                return false;
+            });
+
+            $(document).on("click", 'button[id^="cancel-"]', function (e) {
+                var id = $(this).attr("id").split("-")[1];
+                var body = $("div#" + id).find(".panel-body");
+                body.children(".edit-comment").remove();
+                var p = body.find("p");
+                p.show();
+            });
         });
     </script>
 

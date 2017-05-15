@@ -117,7 +117,7 @@ class UserHandler(Handler):
         else:
             no_more = True
 
-        self.render('user-post-index.html', posts=posts, page=page, no_more=no_more)
+        self.render('user-post-index.html', posts=posts, page=page, no_more=no_more, owner=user)
 
 
 class AuthenticationHandler(Handler):
@@ -264,4 +264,22 @@ class CommentHandler(AjaxHandler):
         else:
             comment = Comment(user=self.user, post=post, content=content, parent=Comment.comment_key(Post.post_key()))
             comment.put()
-            return self.json({'msg': 'Comment successfully'}, 200)
+            return self.json({'msg': 'Comment successfully', 'data': to_json(comment)}, 200)
+
+    def update(self, post_id, comment_id):
+        post_id = int(post_id)
+        post = Post.get_by_id(post_id, parent=Post.post_key())
+        body = self.request.json
+        content = body['content']
+
+        if not post:
+            return self.json({'error': 'Post not found'}, 404)
+        else:
+            comment_id = int(comment_id)
+            comment = Comment.get_by_id(comment_id, parent=Comment.comment_key(Post.post_key()))
+            if comment.post.key().id() != post.key().id():
+                return self.json({'error': 'This comment does not belong to this post'}, 400)
+            else:
+                comment.content = content
+                comment.put()
+                return self.json({'msg': 'Comment updated successfully', 'data': to_json(comment)}, 200)
