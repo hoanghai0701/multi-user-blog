@@ -156,10 +156,14 @@ class PostHandler(Handler):
     def show(self, post_id):
         post_id = int(post_id)
         post = Post.get_by_id(post_id, parent=Post.post_key())
+        like = None
+        if hasattr(self, 'user'):
+            like = post.likes.ancestor(Like.like_key()).filter('user = ', self.user).get()
+
         if not post:
             return self.redirect('/')
         else:
-            self.render('post-show.html', post=post)
+            self.render('post-show.html', post=post, like=like)
 
     def index(self):
         page = self.request.get('page', 0)
@@ -279,7 +283,67 @@ class CommentHandler(AjaxHandler):
             comment = Comment.get_by_id(comment_id, parent=Comment.comment_key(Post.post_key()))
             if comment.post.key().id() != post.key().id():
                 return self.json({'error': 'This comment does not belong to this post'}, 400)
+            elif comment.user.key().id() != self.user.key().id():
+                return self.json({'error': 'You cannot edit this comment'}, 403)
             else:
                 comment.content = content
                 comment.put()
                 return self.json({'msg': 'Comment updated successfully', 'data': to_json(comment)}, 200)
+
+    def destroy(self, post_id, comment_id):
+        post_id = int(post_id)
+        post = Post.get_by_id(post_id, parent=Post.post_key())
+
+        if not post:
+            return self.json({'error': 'Post not found'}, 404)
+        else:
+            comment_id = int(comment_id)
+            comment = Comment.get_by_id(comment_id, parent=Comment.comment_key(Post.post_key()))
+            if comment.post.key().id() != post.key().id():
+                return self.json({'error': 'This comment does not belong to this post'}, 400)
+            elif comment.user.key().id() != self.user.key().id():
+                return self.json({'error': 'You cannot delete this comment'}, 403)
+            else:
+                comment.delete()
+                return self.json({'msg': 'Comment deleted successfully'}, 200)
+
+
+class LikeHandler(AjaxHandler):
+    def store(self, post_id):
+        post_id = int(post_id)
+        post = Post.get_by_id(post_id, parent=Post.post_key())
+
+        if not post:
+            return self.json({'error': 'Post not found'}, 404)
+        else:
+            current_like = self.user.likes.ancestor(Like.like_key()).filter('post = ', post).get()
+            if current_like:
+                return self.json({'error': 'You already liked this post'}, 400)
+            if post.user.key().id() == self.user.key().id():
+                return self.json({'error': 'You cannot like your own post'}, 403)
+
+            like = Like(user=self.user, post=post, parent=Like.like_key())
+            like.put()
+            post.num_likes += 1
+            post.put()
+            return self.json(
+                {'msg': 'Like post successfully', 'data': {'like': to_json(like), 'num_likes': post.num_likes}}, 200)
+
+    def destroy(self, post_id, like_id):
+        post_id = int(post_id)
+        post = Post.get_by_id(post_id, parent=Post.post_key())
+
+        if not post:
+            return self.json({'error': 'Post not found'}, 404)
+        else:
+            like_id = int(like_id)
+            like = Like.get_by_id(like_id, parent=Like.like_key())
+            if like.post.key().id() != post.key().id():
+                return self.json({'error': 'This like does not belong to this post'}, 400)
+            elif like.user.key().id() != self.user.key().id():
+                return self.json({'error': 'You cannot delete this like'}, 403)
+            else:
+                like.delete()
+                post.num_likes -= 1
+                post.put()
+                return self.json({'msg': 'Unlike successfully', 'data': {'num_likes': post.num_likes}}, 200)

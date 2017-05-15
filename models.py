@@ -45,6 +45,7 @@ class Post(db.Model):
     content = db.TextProperty(required=True)
     created_at = db.DateTimeProperty(auto_now_add=True)
     user = db.ReferenceProperty(User, collection_name='posts', required=True)
+    num_likes = db.IntegerProperty(default=0)
 
     @classmethod
     def post_key(cls, name='default'):
@@ -61,3 +62,11 @@ class Comment(db.Model):
     def comment_key(cls, post_key, name='default'):
         return db.Key.from_path('comments', name, parent=post_key)
 
+
+class Like(db.Model):
+    user = db.ReferenceProperty(User, required=True, collection_name='likes')
+    post = db.ReferenceProperty(Post, required=True, collection_name='likes')
+
+    @classmethod
+    def like_key(cls, name='default'):
+        return db.Key.from_path('likes', name)

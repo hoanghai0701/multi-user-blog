@@ -62,6 +62,27 @@
 
         <hr>
 
+        <div class="like-section">
+            <div class="row">
+                <div class="col-lg-2 col-md-2">
+                    {% if user is not defined or user.key().id() == post.user.key().id() %}
+                        <button disabled class="btn btn-default">Like</button>
+                    {% elif like %}
+                        <button id="unlike-{{ like.key().id() }}" class="btn btn-info">Unlike</button>
+                    {% else %}
+                        <button id="like" class="btn btn-default">Like</button>
+                    {% endif %}
+                </div>
+                <div class="col-lg-6 col-md-6 text-left small">
+                    {% if post.num_likes <= 1 %}
+                        <p class="like-text">1 person likes this post</p>
+                    {% else %}
+                        <p class="like-text">{{ post.num_likes }} people like this post</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
         <div id="commentSection">
             {% if user is defined %}
                 <div class="row" id="commentForm">
@@ -254,6 +275,64 @@
                 body.children(".edit-comment").remove();
                 var p = body.find("p");
                 p.show();
+            });
+
+            $(document).on("click", 'a[id^="delete-"]', function (e) {
+               var id = $(this).attr("id").split("-")[1];
+               $.ajax({
+                    url: '/posts/{{ post.key().id() }}/comments/' + id,
+                    type: 'delete',
+                    dataType: 'json',
+                    success: function (res) {
+                        renderComments(currentPage);
+                    }
+                });
+               return false;
+            });
+
+            $(document).on("click", 'button[id="like"]', function (e) {
+                var likeSection = $("div.like-section");
+                var button = likeSection.find('button');
+                button.prop('disabled', true);
+                $.ajax({
+                    url: '/posts/{{ post.key().id() }}/likes',
+                    type: 'post',
+                    dataType: 'json',
+                    success: function (res) {
+                        button.removeClass('btn-default').addClass('btn-info').text('Unlike').attr("id", "unlike-" + res.data.like._id).prop('disabled', false);
+                        var likeText = likeSection.find('.like-text');
+                        if (res.data.num_likes <= 1) {
+                            var text = '1 person likes this post'
+                        } else {
+                            var text = res.data.num_likes + ' people like this post'
+                        }
+                        likeText.text(text);
+                    }
+                });
+               return false;
+            });
+
+            $(document).on("click", 'button[id^="unlike-"]', function (e) {
+                var id = $(this).attr("id").split("-")[1];
+                var likeSection = $("div.like-section");
+                var button = likeSection.find('button');
+                button.prop('disabled', true);
+                $.ajax({
+                    url: '/posts/{{ post.key().id() }}/likes/' + id,
+                    type: 'delete',
+                    dataType: 'json',
+                    success: function (res) {
+                        button.removeClass('btn-info').addClass('btn-default').text('Like').attr("id", "like").prop('disabled', false);
+                        var likeText = likeSection.find('.like-text');
+                        if (res.data.num_likes <= 1) {
+                            var text = '1 person likes this post'
+                        } else {
+                            var text = res.data.num_likes + ' people like this post'
+                        }
+                        likeText.text(text);
+                    }
+                });
+                return false;
             });
         });
     </script>
