@@ -3,6 +3,9 @@ import re
     
 
 class User(db.Model):
+    """
+    Represent an user.
+    """
     username = db.StringProperty(required=True)
     password = db.StringProperty(required=True)
     hidden = ['password']
@@ -40,6 +43,9 @@ class User(db.Model):
 
 
 class Post(db.Model):
+    """
+    Represent a post.
+    """
     title = db.StringProperty(required=True)
     subtitle = db.StringProperty(required=False)
     content = db.TextProperty(required=True)
@@ -53,6 +59,9 @@ class Post(db.Model):
 
 
 class Comment(db.Model):
+    """
+    For comment feature.
+    """
     user = db.ReferenceProperty(User, required=True, collection_name='comments')
     post = db.ReferenceProperty(Post, required=True, collection_name='comments')
     content = db.TextProperty(required=True)
@@ -64,6 +73,9 @@ class Comment(db.Model):
 
 
 class Like(db.Model):
+    """
+    For like feature.
+    """
     user = db.ReferenceProperty(User, required=True, collection_name='likes')
     post = db.ReferenceProperty(Post, required=True, collection_name='likes')
 

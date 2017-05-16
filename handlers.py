@@ -10,6 +10,11 @@ jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir), aut
 
 
 def authenticated(func):
+    """
+    A decorator to redirect user to login page if not authenticated
+    :param func: 
+    :return: 
+    """
     def wrapper(self, *args, **kwargs):
         if not hasattr(self, 'user'):
             return self.redirect('/login')
