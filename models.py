@@ -1,6 +1,7 @@
-from helpers import *
 import re
-    
+
+from utils.helpers import *
+
 
 class User(db.Model):
     """

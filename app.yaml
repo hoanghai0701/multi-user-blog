@@ -6,14 +6,9 @@ handlers:
 - url: /favicon\.ico
   static_files: favicon.ico
   upload: favicon\.ico
-- url: /css
-  static_dir: css
-- url: /img
-  static_dir: img
-- url: /js
-  static_dir: js
-- url: /vendor
-  static_dir: vendor
+- url: /resources
+  static_dir: resources
+  application_readable: true
 - url: .*
   script: main.app
 
