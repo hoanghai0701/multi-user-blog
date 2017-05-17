@@ -1,4 +1,5 @@
 from handler import *
+from utils.decorators import *
 
 
 class PostHandler(Handler):
@@ -22,17 +23,14 @@ class PostHandler(Handler):
             post.put()
             self.redirect('/posts/' + str(post.key().id()))
 
+    @post_exists
     def show(self, post_id):
-        post_id = int(post_id)
-        post = Post.get_by_id(post_id, parent=Post.post_key())
+        post = self.data['post']
         like = None
         if hasattr(self, 'user'):
             like = post.likes.ancestor(Like.like_key()).filter('user = ', self.user).get()
 
-        if not post:
-            return self.redirect('/')
-        else:
-            self.render('post-show.html', post=post, like=like)
+        self.render('post-show.html', post=post, like=like)
 
     def index(self):
         page = self.request.get('page', 0)
@@ -53,55 +51,43 @@ class PostHandler(Handler):
 
         self.render('post-index.html', posts=posts, page=page, no_more=no_more)
 
+    @post_permission
+    @post_exists
     @authenticated
     def edit(self, post_id):
-        post_id = int(post_id)
-        post = Post.get_by_id(post_id, parent=Post.post_key())
+        post = self.data['post']
+        self.render('post-edit.html', title=post.title,
+                    subtitle=post.subtitle,
+                    content=post.content,
+                    post=post)
 
-        if not post:
-            return self.redirect('/')
-        else:
-            if post.user.key().id() != self.user.key().id():
-                return self.redirect('/')
-            self.render('post-edit.html', title=post.title,
-                        subtitle=post.subtitle,
-                        content=post.content,
-                        post=post)
-
+    @post_permission
+    @post_exists
     @authenticated
     def update(self, post_id):
-        post_id = int(post_id)
-        post = Post.get_by_id(post_id, parent=Post.post_key())
+        post = self.data['post']
 
-        if not post:
-            return self.redirect('/')
+        title = self.request.get('title')
+        subtitle = self.request.get('subtitle')
+        content = self.request.get('content')
+
+        if not (title and content):
+            self.render('post-edit.html', title=title,
+                        subtitle=subtitle,
+                        content=content,
+                        post=post,
+                        error="Both title and content are required")
         else:
-            if post.user.key().id() != self.user.key().id():
-                return self.redirect('/')
-            title = self.request.get('title')
-            subtitle = self.request.get('subtitle')
-            content = self.request.get('content')
+            post.title = title
+            post.subtitle = subtitle
+            post.content = content
+            post.put()
+            self.redirect('/posts/' + str(post.key().id()))
 
-            if not (title and content):
-                self.render('post-edit.html', title=title,
-                            subtitle=subtitle,
-                            content=content,
-                            post=post,
-                            error="Both title and content are required")
-            else:
-                post.title = title
-                post.subtitle = subtitle
-                post.content = content
-                post.put()
-                self.redirect('/posts/' + str(post.key().id()))
-
+    @post_permission
+    @post_exists
     @authenticated
     def delete(self, post_id):
-        post_id = int(post_id)
-        post = Post.get_by_id(post_id, parent=Post.post_key())
-
-        if not post:
-            return self.redirect('/users/%s/posts' % str(self.user.key().id()))
-        else:
-            post.delete()
-            self.redirect('/users/%s/posts' % str(self.user.key().id()))
+        post = self.data['post']
+        post.delete()
+        self.redirect('/users/%s/posts' % str(self.user.key().id()))

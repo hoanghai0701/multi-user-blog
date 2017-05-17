@@ -35,9 +35,6 @@ class UserHandler(Handler):
         self.redirect('/')
 
     def posts(self, user_id):
-        if not user_id.isdigit():
-            return self.redirect('/')
-
         user_id = int(user_id)
         user = User.get_by_id(user_id)
 

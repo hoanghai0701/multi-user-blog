@@ -1,5 +1,5 @@
 import re
-from utils import *
+from utils.helpers import *
 
 
 class User(db.Model):
